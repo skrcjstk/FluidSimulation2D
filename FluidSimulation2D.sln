@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FluidSimulation2D", "FluidSimulation2D\FluidSimulation2D.vcxproj", "{17981DCB-C2A7-4B6E-BABD-7CCB7C43857C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4BF06A76-5994-4F50-8E8D-D61E48A7C006} = {4BF06A76-5994-4F50-8E8D-D61E48A7C006}
+		{B0D220A5-D000-4290-88B9-9B3A7D830738} = {B0D220A5-D000-4290-88B9-9B3A7D830738}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PositionBasedFluid2D", "PositionBasedFluid2D\PositionBasedFluid2D.vcxproj", "{B0D220A5-D000-4290-88B9-9B3A7D830738}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PIC2D", "PIC2D\PIC2D.vcxproj", "{4BF06A76-5994-4F50-8E8D-D61E48A7C006}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{17981DCB-C2A7-4B6E-BABD-7CCB7C43857C}.Debug|x64.ActiveCfg = Debug|x64
+		{17981DCB-C2A7-4B6E-BABD-7CCB7C43857C}.Debug|x64.Build.0 = Debug|x64
+		{17981DCB-C2A7-4B6E-BABD-7CCB7C43857C}.Debug|x86.ActiveCfg = Debug|Win32
+		{17981DCB-C2A7-4B6E-BABD-7CCB7C43857C}.Debug|x86.Build.0 = Debug|Win32
+		{17981DCB-C2A7-4B6E-BABD-7CCB7C43857C}.Release|x64.ActiveCfg = Release|x64
+		{17981DCB-C2A7-4B6E-BABD-7CCB7C43857C}.Release|x64.Build.0 = Release|x64
+		{17981DCB-C2A7-4B6E-BABD-7CCB7C43857C}.Release|x86.ActiveCfg = Release|Win32
+		{17981DCB-C2A7-4B6E-BABD-7CCB7C43857C}.Release|x86.Build.0 = Release|Win32
+		{B0D220A5-D000-4290-88B9-9B3A7D830738}.Debug|x64.ActiveCfg = Debug|x64
+		{B0D220A5-D000-4290-88B9-9B3A7D830738}.Debug|x64.Build.0 = Debug|x64
+		{B0D220A5-D000-4290-88B9-9B3A7D830738}.Debug|x86.ActiveCfg = Debug|Win32
+		{B0D220A5-D000-4290-88B9-9B3A7D830738}.Debug|x86.Build.0 = Debug|Win32
+		{B0D220A5-D000-4290-88B9-9B3A7D830738}.Release|x64.ActiveCfg = Release|x64
+		{B0D220A5-D000-4290-88B9-9B3A7D830738}.Release|x64.Build.0 = Release|x64
+		{B0D220A5-D000-4290-88B9-9B3A7D830738}.Release|x86.ActiveCfg = Release|Win32
+		{B0D220A5-D000-4290-88B9-9B3A7D830738}.Release|x86.Build.0 = Release|Win32
+		{4BF06A76-5994-4F50-8E8D-D61E48A7C006}.Debug|x64.ActiveCfg = Debug|x64
+		{4BF06A76-5994-4F50-8E8D-D61E48A7C006}.Debug|x64.Build.0 = Debug|x64
+		{4BF06A76-5994-4F50-8E8D-D61E48A7C006}.Debug|x86.ActiveCfg = Debug|Win32
+		{4BF06A76-5994-4F50-8E8D-D61E48A7C006}.Debug|x86.Build.0 = Debug|Win32
+		{4BF06A76-5994-4F50-8E8D-D61E48A7C006}.Release|x64.ActiveCfg = Release|x64
+		{4BF06A76-5994-4F50-8E8D-D61E48A7C006}.Release|x64.Build.0 = Release|x64
+		{4BF06A76-5994-4F50-8E8D-D61E48A7C006}.Release|x86.ActiveCfg = Release|Win32
+		{4BF06A76-5994-4F50-8E8D-D61E48A7C006}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
