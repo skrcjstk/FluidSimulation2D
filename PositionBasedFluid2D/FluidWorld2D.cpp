@@ -276,7 +276,9 @@ void FluidWorld2D::StepPBFonSub1WithTF()
 
 			pi->m_velocity += pi->m_acceleration * h;
 			pi->m_curPosition += pi->m_velocity * h;
+			
 			pi->m_tempPosition = pi->m_curPosition;
+			pi->m_tempVelocity = pi->m_velocity;
 		}
 	}
 

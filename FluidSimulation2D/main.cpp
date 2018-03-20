@@ -678,7 +678,7 @@ void ParticleTrainingDataSave()
 		fwrite(fbuf, sizeof(float), 2, fpGT);
 
 		// fine's old velocity
-		Vector2f deltaP = fineP[i]->m_oldVelocity;
+		Vector2f deltaP = fineP[i]->m_tempVelocity;
 		fbuf[0] = deltaP[0]; fbuf[1] = deltaP[1];
 		fwrite(fbuf, sizeof(float), 2, fpCNei);
 

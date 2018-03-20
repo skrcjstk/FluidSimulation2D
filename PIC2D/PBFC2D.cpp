@@ -228,7 +228,7 @@ void PBFC2D::UpdateTrainingData(FluidWorld2D* p_mainWorld, FluidWorld2D* p_subWo
 				TrainData a;
 				a.mass = fineP[j]->m_mass;
 				a.RVec = r;
-				a.dPos = fineP[j]->m_oldVelocity;
+				a.dPos = fineP[j]->m_tempVelocity;
 				m_tDataForFine[i].push_back(a);
 			}
 		}
