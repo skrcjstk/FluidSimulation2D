@@ -25,8 +25,10 @@ private:
 	FluidKernel2D m_kernel;
 	float m_init_sl;
 
-
 public:
+	std::vector<Vector2f> m_deltaFromF;
+	std::vector<Vector2f> m_deltaFromB;
+	
 	PBFWorld2D(float p_restDensity, float p_viscosity, float p_surfaceTensionThr, float p_surfaceTensionCoeff);
 	void Reset();
 
@@ -38,6 +40,7 @@ public:
 
 	void ComputeXSPHViscosity(std::vector<FParticle2D*>& m_particles);
 	void ConstraintProjection(std::vector<FParticle2D*>& p_particles, std::vector<FParticle2D*>& p_boundaryParticles, float p_timeStep);
+
 };
 
 #endif

@@ -49,6 +49,8 @@ public:
 	void StepPBFonSub1WithTF();
 	void StepPBFonSub2WithTF();
 
+	PBFWorld2D* GetPBFWorld2D() { return pbfWorld; }
+
 	FParticle2D* GetParticle(int p_index)
 	{
 		return m_particles[p_index];

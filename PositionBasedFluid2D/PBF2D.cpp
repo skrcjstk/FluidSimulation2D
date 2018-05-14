@@ -25,6 +25,11 @@ void PBFWorld2D::InitializeSimulationData(int p_numOfParticles)
 
 	m_deltaX.clear();
 	m_deltaX.resize(p_numOfParticles);
+
+	m_deltaFromF.clear();
+	m_deltaFromF.resize(p_numOfParticles);
+	m_deltaFromB.clear();
+	m_deltaFromB.resize(p_numOfParticles);
 }
 
 void PBFWorld2D::ConstraintProjection(std::vector<FParticle2D*>& p_particles, std::vector<FParticle2D* >& p_boundaryParticles, float p_timeStep)
@@ -43,6 +48,13 @@ void PBFWorld2D::ConstraintProjection(std::vector<FParticle2D*>& p_particles, st
 	float eta = maxError * 0.01f * density0;  // maxError is given in percent
 
 	float avg_density_err = 0.0f;
+
+	for (int i = 0; i < numParticles; i++)
+	{
+		m_deltaFromF[i].setZero();
+		m_deltaFromB[i].setZero();
+	}
+
 	while (((avg_density_err > eta) || (iter < 2)) && (iter < maxiter))
 	{
 		avg_density_err = 0.0f;
@@ -103,7 +115,8 @@ void PBFWorld2D::ConstraintProjection(std::vector<FParticle2D*>& p_particles, st
 			// Compute position correction
 			for (int i = 0; i < numParticles; i++)
 			{
-				Vector2f corr(0.0f, 0.0f);
+				Vector2f corr_fromF(0.0f, 0.0f);
+				Vector2f corr_fromB(0.0f, 0.0f);
 				FParticle2D* pi = p_particles[i];
 
 				for (unsigned int j = 0; j < pi->m_neighborList.size(); j++)
@@ -113,11 +126,14 @@ void PBFWorld2D::ConstraintProjection(std::vector<FParticle2D*>& p_particles, st
 					Vector2f gradC_j = -pj->m_mass / m_restDensity * m_kernel.Cubic_Kernel_Gradient(r);
 
 					if (pj->m_pid == Fluid)
-						corr -= (m_particlesLambda[i] + m_particlesLambda[pj->m_pIdx]) * gradC_j;
+						corr_fromF -= (m_particlesLambda[i] + m_particlesLambda[pj->m_pIdx]) * gradC_j;
 					else
-						corr -= (m_particlesLambda[i]) * gradC_j;
+						corr_fromB -= (m_particlesLambda[i]) * gradC_j;
 				}
-				m_deltaX[i] = corr;
+				m_deltaX[i] = corr_fromF + corr_fromB;
+				
+				m_deltaFromF[i] += corr_fromF;
+				m_deltaFromB[i] += corr_fromB;
 				//if(corr.norm() > 0.0f)
 				//	printf("corr(%f, %f)\n", corr[0], corr[1]);
 			}

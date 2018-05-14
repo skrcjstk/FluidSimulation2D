@@ -36,6 +36,9 @@ void SaveFluidEnvInfo();
 void SaveFineFluidInfo(int idx);
 
 void ParticleTrainingDataSave();
+void BoundaryParticleInfoSave();
+void ParticleTrainingDataSave_fineOnly_simulBefore();
+void ParticleTrainingDataSave_fineOnly_simulAfter();
 
 Primitive spherePrimiCoarse, spherePrimiFine;
 GLint context_major_version, context_minor_version;
@@ -61,10 +64,10 @@ Vector2f gStartForF, gEndForF, gSizeForF;
 float gDxForC;
 Vector2f gStartForC, gEndForC, gSizeForC;
 
-int frameLimit = 2500;
+int frameLimit = 500;
 int accFrameCount = 0;
 
-int maxmaxCountCF = 0, maxmaxCountCB = 0, maxmaxCountFF = 0, maxmaxCountFB = 0;
+int maxmaxF=0, maxmaxB=0, maxmaxFB=0;
 
 int main(int argc, char** argv)
 {
@@ -93,6 +96,8 @@ int main(int argc, char** argv)
 		spherePrimiFine.createSphereBuffers((float)fineR, 8);
 	}
 
+	BoundaryParticleInfoSave();
+
 	glutMainLoop();
 
 	cleanup();
@@ -111,18 +116,22 @@ void timeStep()
 		//picForFine->AssignCells(fineWorld);
 		//picForFine->Map_P2G(fineWorld);
 
-		coarseWorld->StepPBFonSub1();
-		pbfc2D->NeighborBTWTwoResForPBFC(fineWorld, coarseWorld);
-		pbfc2D->SolvePBFCConstaints(fineWorld, coarseWorld);
-		coarseWorld->StepPBFonSub2();
+		//coarseWorld->StepPBFonSub1();
+		//pbfc2D->NeighborBTWTwoResForPBFC(fineWorld, coarseWorld);
+		//pbfc2D->SolvePBFCConstaints(fineWorld, coarseWorld);
+		//coarseWorld->StepPBFonSub2();
+		
 		//picForCoarse->AssignCells(coarseWorld);
 		//picForCoarse->Map_P2G(coarseWorld);
 	}
 	//doPause = !doPause;
 
 	// training data (particle info) save
-	pbfc2D->UpdateTrainingData(fineWorld, coarseWorld);
-	ParticleTrainingDataSave();
+	//pbfc2D->UpdateTrainingData(fineWorld, coarseWorld);
+	//ParticleTrainingDataSave();
+
+	//ParticleTrainingDataSave_fineOnly_simulBefore();
+	//ParticleTrainingDataSave_fineOnly_simulAfter();
 
 	accFrameCount += 1;
 	if (accFrameCount == frameLimit)
@@ -649,9 +658,9 @@ void ParticleTrainingDataSave()
 	std::vector<FParticle2D*>& fineP = fineWorld->GetParticleList();
 	std::vector<FParticle2D*>& coarseP = coarseWorld->GetParticleList();
 
-	string cNeiInfoPath = "./PBFC2D_SD3/cNeiInfo_";
-	string fNeiInfoPath = "./PBFC2D_SD3/fNeiInfo_";
-	string GTPath = "./PBFC2D_SD3/GT_";
+	string cNeiInfoPath = "./PBFC2D_SD4/cNeiInfo_";
+	string fNeiInfoPath = "./PBFC2D_SD4/fNeiInfo_";
+	string GTPath = "./PBFC2D_SD4/GT_";
 	string frameIdx = std::to_string(accFrameCount) + ".dat";
 	
 	FILE* fpCNei = fopen((cNeiInfoPath +frameIdx).c_str(), "wb");
@@ -751,15 +760,142 @@ void ParticleTrainingDataSave()
 		*/
 	}
 	
-	maxCountC > maxmaxCountCF ? maxmaxCountCF = maxCountC : maxmaxCountCF = maxmaxCountCF;
+	//maxCountC > maxmaxCountCF ? maxmaxCountCF = maxCountC : maxmaxCountCF = maxmaxCountCF;
 	//maxCountCB > maxmaxCountCB ? maxmaxCountCB = maxCountCB : maxmaxCountCB = maxmaxCountCB;
-	maxCountF > maxmaxCountFF ? maxmaxCountFF = maxCountF : maxmaxCountFF = maxmaxCountFF;
+	//maxCountF > maxmaxCountFF ? maxmaxCountFF = maxCountF : maxmaxCountFF = maxmaxCountFF;
 	//maxCountFB > maxmaxCountFB ? maxmaxCountFB = maxCountFB : maxmaxCountFB = maxmaxCountFB;
 
-	printf("maxmaxCF: %d, maxmaxCB: %d, maxmaxFF: %d, maxmaxFB: %d\n", 
-		maxmaxCountCF, maxmaxCountCB, maxmaxCountFF, maxmaxCountFB);
+	//printf("maxmaxCF: %d, maxmaxCB: %d, maxmaxFF: %d, maxmaxFB: %d\n", maxmaxCountCF, maxmaxCountCB, maxmaxCountFF, maxmaxCountFB);
 	
 	fclose(fpCNei);
 	fclose(fpFNei);
 	fclose(fpGT);
+}
+
+void BoundaryParticleInfoSave()
+{
+	float fbuf[2];
+	int ibuf[1];
+
+	FILE* fpEnvF = fopen("./PBFC2D_SD10/BoundaryEnv.dat", "wb");
+
+	ibuf[0] = fineWorld->GetNumOfBoundaryParticles();
+	fwrite(ibuf, sizeof(int), 1, fpEnvF);
+	for (int i = 0; i < fineWorld->GetNumOfBoundaryParticles(); i++)
+	{
+		fbuf[0] = fineWorld->GetBoundaryParticle(i)->m_mass;
+		fwrite(fbuf, sizeof(float), 1, fpEnvF);
+		fbuf[0] = fineWorld->GetBoundaryParticle(i)->m_curPosition[0];
+		fbuf[1] = fineWorld->GetBoundaryParticle(i)->m_curPosition[1];
+		fwrite(fbuf, sizeof(float), 2, fpEnvF);
+	}
+	fclose(fpEnvF);
+	printf("EnvForFine are saved.\n");
+}
+void ParticleTrainingDataSave_fineOnly_simulBefore()
+{
+	std::vector<FParticle2D*>& fineP = fineWorld->GetParticleList();
+	FluidKernel2D& fineKernel = fineWorld->GetKernel();
+
+	string frameIdx = std::to_string(accFrameCount) + ".dat";
+
+	string NeighborIdxPath = "./PBFC2D_SD10/NeighborIdx_";
+	string FParticleInfoPath = "./PBFC2D_SD10/FParticleInfo_";
+
+	FILE* fpNeiIdx  = fopen((NeighborIdxPath + frameIdx).c_str(), "wb");
+	FILE* fpFParticle = fopen((FParticleInfoPath + frameIdx).c_str(), "wb");
+	
+	float fbuf[2];
+	int ibuf[1];
+
+	// num of fine particles 
+	ibuf[0] = (int)fineP.size();
+	fwrite(ibuf, sizeof(int), 1, fpFParticle);
+
+	int nNei, maxCountNei = 0;
+		
+	for (int i = 0; i < (int)fineP.size(); i++)
+	{	
+		FParticle2D* pi = fineP[i];
+		
+		// particle information save (mass, position, velocity)
+		fbuf[0] = pi->m_mass;
+		fwrite(fbuf, sizeof(float), 1, fpFParticle);
+		fbuf[0] = pi->m_tempPosition[0];	fbuf[1] = pi->m_tempPosition[1];
+		fwrite(fbuf, sizeof(float), 2, fpFParticle);
+		fbuf[0] = pi->m_tempVelocity[0];	fbuf[1] = pi->m_tempVelocity[1];
+		fwrite(fbuf, sizeof(float), 2, fpFParticle);
+		
+		// neighbor particle info (neighborList Size, neighbor Pid, neighbgor Pidx)
+		ibuf[0] = nNei = (int)pi->m_neighborList.size();
+		fwrite(ibuf, sizeof(int), 1, fpNeiIdx);
+		for (int j = 0; j < (int)pi->m_neighborList.size(); j++)
+		{
+			if (pi->m_neighborList[j]->m_pid == Pid::Fluid)
+			{
+				ibuf[0] = 1;
+				fwrite(ibuf, sizeof(int), 1, fpNeiIdx);
+				ibuf[0] = pi->m_neighborList[j]->m_pIdx;
+				fwrite(ibuf, sizeof(int), 1, fpNeiIdx);
+			}
+			else if (pi->m_neighborList[j]->m_pid == Pid::Boundary)
+			{
+				ibuf[0] = 0;
+				fwrite(ibuf, sizeof(int), 1, fpNeiIdx);
+				ibuf[0] = pi->m_neighborList[j]->m_pIdx;
+				fwrite(ibuf, sizeof(int), 1, fpNeiIdx);
+			}
+		}
+				
+		maxCountNei < nNei ? maxCountNei = nNei : maxCountNei = maxCountNei;
+	}
+	
+	maxmaxFB < maxCountNei ? maxmaxFB = maxCountNei : maxmaxFB = maxmaxFB;
+	
+	printf("(%d)frame maxmaxFB: %d \n", accFrameCount, maxmaxFB);
+
+	fclose(fpNeiIdx);
+	fclose(fpFParticle);
+}
+void ParticleTrainingDataSave_fineOnly_simulAfter()
+{
+	std::vector<FParticle2D*>& fineP = fineWorld->GetParticleList();
+	FluidKernel2D& fineKernel = fineWorld->GetKernel();
+
+	string GTVelPath = "./PBFC2D_SD10/GTVel_";
+	string GTPosPath = "./PBFC2D_SD10/GTPos_";
+	string frameIdx = std::to_string(accFrameCount) + ".dat";
+
+	FILE* fpGTVel = fopen((GTVelPath + frameIdx).c_str(), "wb");
+	FILE* fpGTPos = fopen((GTPosPath + frameIdx).c_str(), "wb");
+	
+	float fbuf[2];
+	int ibuf[1];
+
+	// num of fine particles 
+	ibuf[0] = (int)fineP.size();
+	fwrite(ibuf, sizeof(int), 1, fpGTVel);
+	fwrite(ibuf, sizeof(int), 1, fpGTPos);
+	
+	for (int i = 0; i < (int)fineP.size(); i++)
+	{
+		FParticle2D* pi = fineP[i];
+		Vector2f dPosFromF = fineWorld->GetPBFWorld2D()->m_deltaFromF[i];
+		fbuf[0] = dPosFromF[0]; fbuf[1] = dPosFromF[1];
+		fwrite(fbuf, sizeof(float), 2, fpGTPos);
+		
+		Vector2f corrVelFromF = dPosFromF / fineWorld->GetTimeStep();
+		fbuf[0] = corrVelFromF[0]; fbuf[1] = corrVelFromF[1];
+		fwrite(fbuf, sizeof(float), 2, fpGTVel);
+
+		Vector2f dPosFromB = fineWorld->GetPBFWorld2D()->m_deltaFromB[i];
+		fbuf[0] = dPosFromB[0]; fbuf[1] = dPosFromB[1];
+		fwrite(fbuf, sizeof(float), 2, fpGTPos);
+
+		Vector2f corrVelFromB = dPosFromB / fineWorld->GetTimeStep();
+		fbuf[0] = corrVelFromB[0]; fbuf[1] = corrVelFromB[1];
+		fwrite(fbuf, sizeof(float), 2, fpGTVel);
+	}
+	fclose(fpGTVel);
+	fclose(fpGTPos);
 }
