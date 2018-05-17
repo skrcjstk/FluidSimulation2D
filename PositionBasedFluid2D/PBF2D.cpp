@@ -32,21 +32,21 @@ void PBFWorld2D::InitializeSimulationData(int p_numOfParticles)
 	m_deltaFromB.resize(p_numOfParticles);
 }
 
-void PBFWorld2D::ConstraintProjection(std::vector<FParticle2D*>& p_particles, std::vector<FParticle2D* >& p_boundaryParticles, float p_timeStep)
+void PBFWorld2D::ConstraintProjection(std::vector<FParticle2D*>& p_particles, 
+	std::vector<FParticle2D* >& p_boundaryParticles, 
+	float p_timeStep,
+	FluidKernel2D& p_kernel)
 {
 	int maxiter = 100;
 	int iter = 0;
 
 	float eps = 1.0e-6f;
-
 	int numParticles = (int)p_particles.size();
-
 	float invH = 1.0f / p_timeStep;
 
 	float density0 = m_restDensity;
 	float maxError = 0.01f;
 	float eta = maxError * 0.01f * density0;  // maxError is given in percent
-
 	float avg_density_err = 0.0f;
 
 	for (int i = 0; i < numParticles; i++)
@@ -66,14 +66,14 @@ void PBFWorld2D::ConstraintProjection(std::vector<FParticle2D*>& p_particles, st
 			{
 				// computePBFDensity
 				FParticle2D* pi = p_particles[i];
-				pi->m_density = pi->m_mass * m_kernel.Cubic_Kernel0();
+				pi->m_density = pi->m_mass * p_kernel.Cubic_Kernel0();
 
 				for (unsigned int j = 0; j < pi->m_neighborList.size(); j++)
 				{
 					FParticle2D* pj = pi->m_neighborList[j];
 					Vector2f r = pi->m_curPosition - pj->m_curPosition;
 
-					pi->m_density += pj->m_mass * m_kernel.Cubic_Kernel(r);
+					pi->m_density += pj->m_mass * p_kernel.Cubic_Kernel(r);
 				}
 
 				float density_err = std::max(pi->m_density, density0) - density0;
@@ -94,7 +94,7 @@ void PBFWorld2D::ConstraintProjection(std::vector<FParticle2D*>& p_particles, st
 						FParticle2D* pj = pi->m_neighborList[j];
 						Vector2f r = pi->m_curPosition - pj->m_curPosition;
 
-						Vector2f gradC_j = -pj->m_mass / m_restDensity * m_kernel.Cubic_Kernel_Gradient(r);
+						Vector2f gradC_j = -pj->m_mass / m_restDensity * p_kernel.Cubic_Kernel_Gradient(r);
 						sum_grad_C2 += gradC_j.squaredNorm();
 						gradC_i -= gradC_j;
 					}
@@ -123,7 +123,7 @@ void PBFWorld2D::ConstraintProjection(std::vector<FParticle2D*>& p_particles, st
 				{
 					FParticle2D* pj = pi->m_neighborList[j];
 					Vector2f r = pi->m_curPosition - pj->m_curPosition;
-					Vector2f gradC_j = -pj->m_mass / m_restDensity * m_kernel.Cubic_Kernel_Gradient(r);
+					Vector2f gradC_j = -pj->m_mass / m_restDensity * p_kernel.Cubic_Kernel_Gradient(r);
 
 					if (pj->m_pid == Fluid)
 						corr_fromF -= (m_particlesLambda[i] + m_particlesLambda[pj->m_pIdx]) * gradC_j;
@@ -149,7 +149,7 @@ void PBFWorld2D::ConstraintProjection(std::vector<FParticle2D*>& p_particles, st
 	}
 }
 
-void PBFWorld2D::ComputeXSPHViscosity(std::vector<FParticle2D*>& p_particles)
+void PBFWorld2D::ComputeXSPHViscosity(std::vector<FParticle2D*>& p_particles, FluidKernel2D& p_kernel)
 {
 	int numParticles = (int)p_particles.size();
 #pragma omp parallel default(shared)
@@ -165,7 +165,7 @@ void PBFWorld2D::ComputeXSPHViscosity(std::vector<FParticle2D*>& p_particles)
 				if (pj->m_pid == Fluid)
 				{
 					Vector2f r = pi->m_curPosition - pj->m_curPosition;
-					Vector2f velCorr = m_viscosity * (pj->m_mass / pj->m_density) * (pi->m_velocity - pj->m_velocity) * m_kernel.Cubic_Kernel(r);
+					Vector2f velCorr = m_viscosity * (pj->m_mass / pj->m_density) * (pi->m_velocity - pj->m_velocity) * p_kernel.Cubic_Kernel(r);
 
 					pi->m_velocity -= velCorr;
 				}

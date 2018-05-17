@@ -24,8 +24,7 @@ private:
 	int  m_numOfParticles;
 	int  m_numOfBoundaryParticles;
 
-	float m_particleRadius;
-	float m_smoothingLength;
+	float m_fluidParticleRadius;
 	float m_restDensity;
 	float m_timeStep;
 	bool  m_useGravity;
@@ -40,10 +39,12 @@ public:
 	~FluidWorld2D();
 
 	void Reset();
-	void CreateParticles(std::vector<Vector2f>& p_damParticles, std::vector<Vector2f>& p_containerParticles, float p_particleRadius);
+	void CreateBoundaryParticles(std::vector<Vector2f>& p_particles, float p_particleRadius);
+	void CreateFluidParticles(std::vector<Vector2f>& p_particles, float p_particleRadius);
 
 	void StepPBF();
-	void StepPBFonSub();
+	//void StepPBFonMain1();
+	//void StepPBFonMain2();
 	void StepPBFonSub1();
 	void StepPBFonSub2();
 	void StepPBFonSub1WithTF();
@@ -76,15 +77,6 @@ public:
 	{
 		return m_numOfBoundaryParticles;
 	}
-	float GetSmoothingLength()
-	{
-		return m_smoothingLength;
-	}
-
-	void SetSmoothingLength(float p_smoothingLength)
-	{
-		m_smoothingLength = p_smoothingLength;
-	}
 	void SetUseGravity(bool p_useGravity)
 	{
 		m_useGravity = p_useGravity;
@@ -93,10 +85,14 @@ public:
 	{
 		m_timeStep = p_timeStep;
 	}
+	float GetParticleRadius()
+	{
+		return m_fluidParticleRadius;
+	}
 
 	FluidKernel2D& GetKernel() { return m_kernel; }
 	float GetTimeStep() { return m_timeStep; }
-	float GetParticleRadius() { return m_particleRadius; }
+	float GetFluidParticleRadius() { return m_fluidParticleRadius; }
 	float GetRestDensity() { return m_restDensity; }
 
 };

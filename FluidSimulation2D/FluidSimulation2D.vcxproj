@@ -138,7 +138,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\Extern\freeglut\include;..\Extern\eigen;..\Extern\glew\include;..\Extern\AntTweakBar\include;..\PositionBasedFluid2D;..\PIC2D;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <OpenMPSupport>true</OpenMPSupport>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -151,6 +151,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="main_fine2coarse.cpp" />
     <ClCompile Include="Visualization\Camera.cpp" />
     <ClCompile Include="Visualization\MiniGL.cpp" />
     <ClCompile Include="Visualization\PrimitiveBuffer.cpp" />

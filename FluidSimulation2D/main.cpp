@@ -1,3 +1,4 @@
+/*
 #include "GL/glew.h"
 #include "Visualization\MiniGL.h"
 #include "Visualization\Selection.h"
@@ -69,6 +70,7 @@ int accFrameCount = 0;
 
 int maxmaxF=0, maxmaxB=0, maxmaxFB=0;
 
+
 int main(int argc, char** argv)
 {
 	std::srand((unsigned int)std::time(nullptr));
@@ -104,6 +106,7 @@ int main(int argc, char** argv)
 		
 	return 0;
 }
+
 
 void timeStep()
 {
@@ -327,7 +330,8 @@ void buildModel_BreakingDam()
 
 	fineWorld = new FluidWorld2D();
 	fineWorld->SetTimeStep(timeStep);
-	fineWorld->CreateParticles(damParticles, boundaryParticles, fineR);
+	fineWorld->CreateBoundaryParticles(boundaryParticles, fineR);
+	fineWorld->CreateFluidParticles(damParticles, fineR);
 	
 	// PIC grid for fine grid
 	gDxForF = 2.0f * fineR;
@@ -358,7 +362,8 @@ void buildModel_BreakingDam()
 
 	coarseWorld = new FluidWorld2D();
 	coarseWorld->SetTimeStep(timeStep);
-	coarseWorld->CreateParticles(a, subBoundary, coarseR);
+	coarseWorld->CreateFluidParticles(a, coarseR);
+	coarseWorld->CreateBoundaryParticles(subBoundary, coarseR);
 
 	wall->NeighborSearchBTWTwoRes(fineWorld, coarseWorld);
 	wall->InterpolateVelocity(fineWorld, coarseWorld);
@@ -390,7 +395,8 @@ void buildModel_FromFile()
 
 	fineWorld = new FluidWorld2D();
 	fineWorld->SetTimeStep(timeStep);
-	fineWorld->CreateParticles(damParticles, boundaryParticles, fineR);
+	fineWorld->CreateBoundaryParticles(boundaryParticles, fineR);
+	fineWorld->CreateFluidParticles(damParticles, fineR);
 	
 	// velocity 
 	for (int i = 0; i < fineWorld->GetNumOfParticles(); i++)
@@ -420,7 +426,8 @@ void buildModel_FromFile()
 
 	coarseWorld = new FluidWorld2D();
 	coarseWorld->SetTimeStep(timeStep);
-	coarseWorld->CreateParticles(a, subBoundary, coarseR);
+	coarseWorld->CreateFluidParticles(a, coarseR);
+	coarseWorld->CreateBoundaryParticles(subBoundary, coarseR);
 
 	wall->NeighborSearchBTWTwoRes(fineWorld, coarseWorld);
 	wall->InterpolateVelocity(fineWorld, coarseWorld);
@@ -709,22 +716,6 @@ void ParticleTrainingDataSave()
 			fwrite(fbuf, sizeof(float), 2, fpCNei);
 		}
 
-		/*
-		// neighbor coarse boundary particle info
-		ibuf[0] = pbfc2D->m_tDataForCoarseB[i].size();
-		maxCountCB < ibuf[0] ? maxCountCB = ibuf[0] : maxCountCB = maxCountCB;
-		fwrite(ibuf, sizeof(int), 1, fpCNei);
-		for (int j = 0; j < ibuf[0]; j++)
-		{
-			fbuf[0] = pbfc2D->m_tDataForCoarseB[i][j].kWeight;
-			fwrite(fbuf, sizeof(float), 1, fpCNei);
-
-			Vector2f& RVec = pbfc2D->m_tDataForCoarseB[i][j].RVec;
-			fbuf[0] = RVec[0]; fbuf[1] = RVec[1];
-			fwrite(fbuf, sizeof(float), 2, fpCNei);
-		}
-		*/
-
 		// neighbor fine particle info
 		ibuf[0] = pbfc2D->m_tDataForFine[i].size();
 		maxCountF < ibuf[0] ? maxCountF = ibuf[0] : maxCountF = maxCountF;
@@ -742,22 +733,6 @@ void ParticleTrainingDataSave()
 			fbuf[0] = dPos[0]; fbuf[1] = dPos[1];
 			fwrite(fbuf, sizeof(float), 2, fpFNei);
 		}
-
-		/*
-		// neighbor fine boundary particle info
-		ibuf[0] = pbfc2D->m_tDataForFineB[i].size();
-		maxCountFB < ibuf[0] ? maxCountFB = ibuf[0] : maxCountFB = maxCountFB;
-		fwrite(ibuf, sizeof(int), 1, fpFNei);
-		for (int j = 0; j < ibuf[0]; j++)
-		{
-			fbuf[0] = pbfc2D->m_tDataForFineB[i][j].kWeight;
-			fwrite(fbuf, sizeof(float), 1, fpFNei);
-
-			Vector2f& RVec = pbfc2D->m_tDataForFineB[i][j].RVec;
-			fbuf[0] = RVec[0]; fbuf[1] = RVec[1];
-			fwrite(fbuf, sizeof(float), 2, fpFNei);
-		}
-		*/
 	}
 	
 	//maxCountC > maxmaxCountCF ? maxmaxCountCF = maxCountC : maxmaxCountCF = maxmaxCountCF;
@@ -899,3 +874,4 @@ void ParticleTrainingDataSave_fineOnly_simulAfter()
 	fclose(fpGTVel);
 	fclose(fpGTPos);
 }
+*/

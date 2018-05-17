@@ -8,79 +8,93 @@ FluidWorld2D::FluidWorld2D()
 	m_restDensity = 1000.0f;
 
 	pbfWorld = new PBFWorld2D(m_restDensity, 0.02f, 0.2f, 0.2f);
+	m_numOfParticles = m_numOfBoundaryParticles = 0;
 }
 FluidWorld2D::~FluidWorld2D() {}
 
-void FluidWorld2D::CreateParticles(std::vector<Vector2f>& p_damParticles, std::vector<Vector2f>& p_containerParticles, float p_particleRadius)
+void FluidWorld2D::CreateBoundaryParticles(std::vector<Vector2f>& p_particles, float p_particleRadius)
 {
-	m_numOfParticles = (int)p_damParticles.size();
-	m_numOfBoundaryParticles = (int)p_containerParticles.size();
-	m_particleRadius = p_particleRadius;
-	m_smoothingLength = 4.0f * m_particleRadius;
-	m_kernel.SetSmoothingRadius(m_smoothingLength);
-	pbfWorld->SetSmoothingLength(m_smoothingLength);
-	pbfWorld->InitializeSimulationData(m_numOfParticles);
-	
+	FluidKernel2D bKernel;
+	float sl = 4.0f * p_particleRadius;
 	float diameter = 2.0f * p_particleRadius;
+	
+	bKernel.SetSmoothingRadius(sl);
+	
+	int startIndex = (int)m_boundaryParticles.size();
+	int nBoundaryParticles = (int)p_particles.size();
+	m_boundaryParticles.resize(startIndex + nBoundaryParticles);
+	
 
-	m_particles.resize(m_numOfParticles);
-	m_boundaryParticles.resize(m_numOfBoundaryParticles);
-
-#pragma omp parallel default(shared)
-	{
-		// dam particles creation
+	// copy boundary particles
 #pragma omp for schedule(static)
-		for (int i = 0; i < m_numOfParticles; i++)
-		{
-			m_particles[i] = new FParticle2D();
-			m_particles[i]->m_pid = Fluid;
-			m_particles[i]->m_pIdx = i;
-			//m_particles[i]->m_mass = 0.8f * m_restDensity * diameter * diameter * diameter;
-			m_particles[i]->m_mass = m_restDensity * p_particleRadius * p_particleRadius;
-			m_particles[i]->m_restPosition = p_damParticles[i];
-			m_particles[i]->m_curPosition = p_damParticles[i];
-
-			m_particles[i]->m_velocity.setZero();
-			m_particles[i]->m_acceleration.setZero();
-		}
-
-		// copy boundary particles
-#pragma omp for schedule(static)
-		for (int i = 0; i < m_numOfBoundaryParticles; i++)
+		for (int i = startIndex; i < (int)m_boundaryParticles.size(); i++)
 		{
 			m_boundaryParticles[i] = new FParticle2D();
 			m_boundaryParticles[i]->m_pid = Boundary;
 			m_boundaryParticles[i]->m_pIdx = i;
-			m_boundaryParticles[i]->m_mass = 0.8f * m_restDensity * diameter * diameter * diameter;
-			m_boundaryParticles[i]->m_restPosition = p_containerParticles[i];
-			m_boundaryParticles[i]->m_curPosition = p_containerParticles[i];
-
+			m_boundaryParticles[i]->m_restPosition = p_particles[i];
+			m_boundaryParticles[i]->m_curPosition = p_particles[i];
 			m_boundaryParticles[i]->m_velocity.setZero();
 			m_boundaryParticles[i]->m_acceleration.setZero();
 		}
 
-		// boudary particles Psi value 
+	// boudary particles Psi value 
 #pragma omp for schedule(static)
-		for (int i = 0; i < m_numOfBoundaryParticles; i++)
+	for (int i = startIndex; i < (int)m_boundaryParticles.size(); i++)
+	{
+		FParticle2D* pi = m_boundaryParticles[i];
+		float delta = bKernel.Cubic_Kernel0();
+		for (int j = startIndex; j < (int)m_boundaryParticles.size(); j++)
 		{
-			FParticle2D* pi = m_boundaryParticles[i];
-			float delta = m_kernel.Cubic_Kernel0();
-			for (int j = 0; j < m_numOfBoundaryParticles; j++)
-			{
-				FParticle2D* pj = m_boundaryParticles[j];
-				Vector2f r = pi->m_restPosition - pj->m_restPosition;
+			FParticle2D* pj = m_boundaryParticles[j];
+			Vector2f r = pi->m_restPosition - pj->m_restPosition;
 
-				if (i != j && r.norm() <= m_smoothingLength)
-					delta += m_kernel.Cubic_Kernel(r);
-			}
-			float volume = 1.0f / delta;
-			pi->m_mass = m_restDensity * volume;
+			if (i != j && r.norm() <= sl)
+				delta += bKernel.Cubic_Kernel(r);
+		}
+		float volume = 1.0f / delta;
+		pi->m_mass = m_restDensity * volume;
+	}
+
+	m_numOfBoundaryParticles += nBoundaryParticles;
+	printf("Num of boundary particles : %d\n", m_numOfBoundaryParticles);
+}
+
+void FluidWorld2D::CreateFluidParticles(std::vector<Vector2f>& p_particles, float p_particleRadius)
+{
+	int nFluidParticles = (int)p_particles.size();
+	m_fluidParticleRadius = p_particleRadius;
+	float sl = 4.0f * m_fluidParticleRadius;
+	m_kernel.SetSmoothingRadius(sl);
+	float diameter = 2.0f * m_fluidParticleRadius;
+
+	int startIndex = (int)m_particles.size();
+	m_particles.resize(startIndex + nFluidParticles);
+	
+#pragma omp parallel default(shared)
+	{
+		// dam particles creation
+#pragma omp for schedule(static)
+		for (int i = startIndex; i < (int)m_particles.size(); i++)
+		{
+			m_particles[i] = new FParticle2D();
+			m_particles[i]->m_pid = Fluid;
+			m_particles[i]->m_pIdx = i;
+			//m_particles[i]->m_mass = 0.8f * m_restDensity * diameter * diameter * diameter; (in 3D case)
+			m_particles[i]->m_mass = m_restDensity * p_particleRadius * p_particleRadius;
+			m_particles[i]->m_restPosition = p_particles[i];
+			m_particles[i]->m_curPosition = p_particles[i];
+			m_particles[i]->m_velocity.setZero();
+			m_particles[i]->m_acceleration.setZero();
 		}
 	}
-	printf("Num of fluid particles : %d\n", m_numOfParticles);
-	printf("Num of boundary particles : %d\n", m_numOfBoundaryParticles);
 	
+	m_numOfParticles += (int)p_particles.size();
+	printf("Num of fluid particles : %d\n", m_numOfParticles);
+
+	pbfWorld->InitializeSimulationData(m_numOfParticles);
 }
+
 void FluidWorld2D::Reset()
 {
 	for (int i = 0; i < m_numOfParticles; i++)
@@ -94,6 +108,8 @@ void FluidWorld2D::Reset()
 }
 void FluidWorld2D::NeighborListUpdate()
 {
+	float sl = 4.0f * m_fluidParticleRadius;
+
 #pragma omp parallel default(shared)
 	{
 #pragma omp for schedule(static)
@@ -107,14 +123,14 @@ void FluidWorld2D::NeighborListUpdate()
 			{
 				FParticle2D* pj = m_particles[j];
 				Vector2f r = pi->m_curPosition - pj->m_curPosition;
-				if (i != j && r.norm() < m_smoothingLength)
+				if (i != j && r.norm() < sl)
 					pi->m_neighborList.push_back(pj);
 			}
 			for (int j = 0; j < m_numOfBoundaryParticles; j++)
 			{
 				FParticle2D* pj = m_boundaryParticles[j];
 				Vector2f r = pi->m_curPosition - pj->m_curPosition;
-				if (r.norm() < m_smoothingLength)
+				if (r.norm() < sl)
 					pi->m_neighborList.push_back(pj);
 			}
 		}
@@ -122,7 +138,7 @@ void FluidWorld2D::NeighborListUpdate()
 }
 void FluidWorld2D::UpdateTimeStepSizeCFL()
 {
-	float radius = m_particleRadius;
+	float radius = m_fluidParticleRadius;
 	float h = m_timeStep;
 
 	// Approximate max. position change due to current velocities
@@ -192,7 +208,7 @@ void FluidWorld2D::StepPBF()
 	}
 
 	NeighborListUpdate();
-	pbfWorld->ConstraintProjection(m_particles, m_boundaryParticles, h);
+	pbfWorld->ConstraintProjection(m_particles, m_boundaryParticles, h, m_kernel);
 
 #pragma omp parallel default(shared)
 	{
@@ -240,7 +256,7 @@ void FluidWorld2D::StepPBFonSub2()
 {
 	float h = m_timeStep;
 
-	pbfWorld->ConstraintProjection(m_particles, m_boundaryParticles, h);
+	pbfWorld->ConstraintProjection(m_particles, m_boundaryParticles, h, m_kernel);
 
 #pragma omp parallel default(shared)
 	{
@@ -252,9 +268,7 @@ void FluidWorld2D::StepPBFonSub2()
 	}
 
 	//pbfWorld->ComputeXSPHViscosity(m_particles);
-
 	//UpdateTimeStepSizeCFL();
-
 	m_accTimeIntegration += h;
 }
 

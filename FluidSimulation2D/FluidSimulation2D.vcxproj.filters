@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Visualization\Camera.cpp">
       <Filter>소스 파일\Visualization</Filter>
     </ClCompile>
@@ -35,6 +32,12 @@
     </ClCompile>
     <ClCompile Include="Visualization\Shader.cpp">
       <Filter>소스 파일\Visualization</Filter>
+    </ClCompile>
+    <ClCompile Include="main_fine2coarse.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

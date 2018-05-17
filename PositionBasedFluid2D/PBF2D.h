@@ -22,7 +22,6 @@ private:
 	float m_surfaceTensionThr;
 	float m_surfaceTensionCoeff;
 	float m_restDensity;
-	FluidKernel2D m_kernel;
 	float m_init_sl;
 
 public:
@@ -33,13 +32,9 @@ public:
 	void Reset();
 
 	void InitializeSimulationData(int p_numOfParticles);
-	void SetSmoothingLength(float p_smoothingLength)
-	{
-		m_kernel.SetSmoothingRadius(p_smoothingLength);
-	}
 
-	void ComputeXSPHViscosity(std::vector<FParticle2D*>& m_particles);
-	void ConstraintProjection(std::vector<FParticle2D*>& p_particles, std::vector<FParticle2D*>& p_boundaryParticles, float p_timeStep);
+	void ComputeXSPHViscosity(std::vector<FParticle2D*>& m_particles, FluidKernel2D& p_kernel);
+	void ConstraintProjection(std::vector<FParticle2D*>& p_particles, std::vector<FParticle2D*>& p_boundaryParticles, float p_timeStep, FluidKernel2D& p_kernel);
 
 };
 

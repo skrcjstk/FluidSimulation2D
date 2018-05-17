@@ -41,11 +41,16 @@ public:
 	std::vector<std::vector<TrainData>> m_tDataForFineB;
 	std::vector<std::vector<TrainData>> m_tDataForCoarse;	
 	std::vector<std::vector<TrainData>> m_tDataForCoarseB;
+	
+	std::vector<std::vector<int>> m_neighListwithCoarseFP;
+	std::vector<std::vector<int>> m_neighListwithCoarseBP;
 
 	// for PBFC
 	PBFControlData m_PBFCData;
 	std::vector<std::vector<int>> m_neighListwithSubP;
 	std::vector<std::vector<int>> m_neighListwithSubBoundaryP;
+
+
 
 	void NeighborBTWTwoResForPBFC(FluidWorld2D* p_mainWorld, FluidWorld2D* p_subWorld);
 	void SolvePBFCConstaints(FluidWorld2D* p_mainWorld, FluidWorld2D* p_subWorld);
@@ -54,8 +59,8 @@ public:
 
 	//void UpdateTrainingDataForSub(FluidWorld2D* p_subWorld);
 
-	float m_intensityOfDensityC = 1.0f;
-	float m_intensityOfVelocityC = 1.0f;
+	float m_intensityOfDensityC = 0.01f;
+	float m_intensityOfVelocityC = 0.01f;
 
 };
 #endif 
