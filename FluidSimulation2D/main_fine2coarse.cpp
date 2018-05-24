@@ -30,6 +30,7 @@ void CreateFineContainer(std::vector<Vector2f>& p_boundaryParticles);
 void AddWall(Vector2f p_min, Vector2f p_max, std::vector<Vector2f>& p_boundaryParticle, float p_particleRadius);
 
 void SavePBFCTrainingData();
+void SavePBFCTrainingData2();
 void SavePBFCTrainingDataEnv();
 
 Primitive spherePrimiCoarse, spherePrimiFine;
@@ -97,16 +98,16 @@ void timeStep()
 	if (doPause)
 		return;
 	
-	coarseWorld->StepPBFonSub1();
+	coarseWorld->StepPBF();
 	fineWorld->StepPBFonSub1();
 
 	pbfc2D->NeighborBTWTwoResForPBFC(coarseWorld, fineWorld);
-	coarseWorld->StepPBFonSub2();
-	
 	pbfc2D->SolvePBFCConstaints(coarseWorld, fineWorld);
+	
 	fineWorld->StepPBFonSub2();
 
-	SavePBFCTrainingData();
+	//SavePBFCTrainingData();
+	SavePBFCTrainingData2();
 
 	accFrameCount += 1;
 	if (accFrameCount == frameLimit)
@@ -416,7 +417,7 @@ void SavePBFCTrainingDataEnv()
 	float fbuf[2];
 	int ibuf[1];
 
-	FILE* fpEnvF = fopen("./PBFC2D_SD12/BoundaryEnv.dat", "wb");
+	FILE* fpEnvF = fopen("./PBFC2D_SD13/BoundaryEnv.dat", "wb");
 
 	ibuf[0] = fineWorld->GetNumOfBoundaryParticles();
 	fwrite(ibuf, sizeof(int), 1, fpEnvF);
@@ -438,11 +439,11 @@ void SavePBFCTrainingData()
 	std::vector<FParticle2D*>& coarseP = coarseWorld->GetParticleList();
 
 	string frameIdx = std::to_string(accFrameCount) + ".dat";
-	string NeighborIdxPath = "./PBFC2D_SD12/NeighborInfo_";
-	string FineParticleInfoPath = "./PBFC2D_SD12/FineParticleInfo_";
-	string CoarseParticleInfoPath = "./PBFC2D_SD12/CoarseParticleInfo_";
-	string GTPosPath = "./PBFC2D_SD12/GTPos_";
-	string GTVelPath = "./PBFC2D_SD12/GTVel_";
+	string NeighborIdxPath = "./PBFC2D_SD13/NeighborInfo_";
+	string FineParticleInfoPath = "./PBFC2D_SD13/FineParticleInfo_";
+	string CoarseParticleInfoPath = "./PBFC2D_SD13/CoarseParticleInfo_";
+	string GTPosPath = "./PBFC2D_SD13/GTPos_";
+	string GTVelPath = "./PBFC2D_SD13/GTVel_";
 
 	FILE* fpNeiIdx = fopen((NeighborIdxPath + frameIdx).c_str(), "wb");
 	FILE* fpFineP = fopen((FineParticleInfoPath + frameIdx).c_str(), "wb");
@@ -527,4 +528,59 @@ void SavePBFCTrainingData()
 	fclose(fpCoarseP);
 	fclose(fpGTPos);
 	fclose(fpGTVel);
+}
+
+void SavePBFCTrainingData2()
+{
+	std::vector<FParticle2D*>& fineP = fineWorld->GetParticleList();
+	std::vector<FParticle2D*>& coarseP = coarseWorld->GetParticleList();
+
+	string frameIdx = std::to_string(accFrameCount) + ".dat";
+	string FineParticleInfoPath = "./PBFC2D_SD13/FineParticleInfo_";
+	string CoarseParticleInfoPath = "./PBFC2D_SD13/CoarseParticleInfo_";
+
+	FILE* fpFineP = fopen((FineParticleInfoPath + frameIdx).c_str(), "wb");
+	FILE* fpCoarseP = fopen((CoarseParticleInfoPath + frameIdx).c_str(), "wb");
+	
+	float fbuf[2];
+	int ibuf[1];
+
+	// num of fine particles 
+	ibuf[0] = (int)fineP.size();
+	fwrite(ibuf, sizeof(int), 1, fpFineP);
+
+	int nNei, maxCountNei = 0;
+	int nNeiFP, nNeiBP;
+	// save fineP's information
+	for (int i = 0; i < (int)fineP.size(); i++)
+	{
+		FParticle2D* pi = fineP[i];
+
+		// particle information save (mass, tempPosition, tempVelocity)
+		fbuf[0] = pi->m_mass;
+		fwrite(fbuf, sizeof(float), 1, fpFineP);
+		fbuf[0] = pi->m_curPosition[0];	fbuf[1] = pi->m_curPosition[1];
+		fwrite(fbuf, sizeof(float), 2, fpFineP);
+		fbuf[0] = pi->m_tempVelocity[0];	fbuf[1] = pi->m_tempVelocity[1];
+		fwrite(fbuf, sizeof(float), 2, fpFineP);
+	}
+
+	ibuf[0] = (int)coarseP.size();
+	fwrite(ibuf, sizeof(int), 1, fpCoarseP);
+	// save coarseP's information
+	for (int i = 0; i < (int)coarseP.size(); i++)
+	{
+		FParticle2D* pi = coarseP[i];
+
+		// particle information save (mass, tempPosition, tempVelocity)
+		fbuf[0] = pi->m_mass;
+		fwrite(fbuf, sizeof(float), 1, fpCoarseP);
+		fbuf[0] = pi->m_curPosition[0];	fbuf[1] = pi->m_curPosition[1];
+		fwrite(fbuf, sizeof(float), 2, fpCoarseP);
+		fbuf[0] = pi->m_velocity[0];	fbuf[1] = pi->m_velocity[1];
+		fwrite(fbuf, sizeof(float), 2, fpCoarseP);
+	}
+
+	fclose(fpFineP);
+	fclose(fpCoarseP);
 }
