@@ -51,7 +51,7 @@ public:
 	std::vector<std::vector<int>> m_neighListwithSubBoundaryP;
 
 
-
+	void SetSearchRange(float p_searchRange);
 	void NeighborBTWTwoResForPBFC(FluidWorld2D* p_mainWorld, FluidWorld2D* p_subWorld);
 	void SolvePBFCConstaints(FluidWorld2D* p_mainWorld, FluidWorld2D* p_subWorld);
 	void UpdateTrainingData(FluidWorld2D* p_mainWorld, FluidWorld2D* p_subWorld);
@@ -60,7 +60,7 @@ public:
 	//void UpdateTrainingDataForSub(FluidWorld2D* p_subWorld);
 
 	float m_intensityOfDensityC = 0.01f;
-	float m_intensityOfVelocityC = 0.01f;
+	float m_intensityOfVelocityC = 0.001f;
 
 };
 #endif 

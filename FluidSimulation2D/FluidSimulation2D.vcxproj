@@ -151,7 +151,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="main_coarse2fine.cpp" />
     <ClCompile Include="main_fine2coarse.cpp" />
+    <ClCompile Include="main_visualization.cpp" />
     <ClCompile Include="Visualization\Camera.cpp" />
     <ClCompile Include="Visualization\MiniGL.cpp" />
     <ClCompile Include="Visualization\PrimitiveBuffer.cpp" />

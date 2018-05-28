@@ -62,7 +62,7 @@ private:
 
 inline float linear_kernel(const Vector2f& d, const float& h)
 {
-	return std::max((1.0 - fabs(d(0) / h)) * (1.0 - fabs(d(1) / h)) * (1.0 - fabs(d(2) / h)), 0.0);
+	return float(std::max((1.0 - fabs(d(0) / h)) * (1.0 - fabs(d(1) / h)) * (1.0 - fabs(d(2) / h)), 0.0));
 }
 
 template<class T>

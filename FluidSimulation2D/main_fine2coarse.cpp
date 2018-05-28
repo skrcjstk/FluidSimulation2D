@@ -1,3 +1,4 @@
+
 #include "GL/glew.h"
 #include "Visualization\MiniGL.h"
 #include "Visualization\Selection.h"
@@ -33,6 +34,8 @@ void SavePBFCTrainingData();
 void SavePBFCTrainingData2();
 void SavePBFCTrainingDataEnv();
 
+TimerChrono timer1;
+
 Primitive spherePrimiCoarse, spherePrimiFine;
 GLint context_major_version, context_minor_version;
 FluidWorld2D* fineWorld, *coarseWorld;
@@ -42,17 +45,18 @@ FlowBoundary* wall;
 bool doPause = true;
 
 float fineR = 0.025f;
-float coarseR = 0.05f;
-int fineDamWidth = 30;
-int fineDamHeight = 30;
-int coarseDamWidth = fineDamWidth / 2;
-int coarseDamHeight = fineDamHeight / 2;
-float containerWidth = (coarseDamWidth * 4) * coarseR;
-float containerHeight = (coarseDamWidth * 4) * coarseR;
+float coarseR = 0.1f;
+int fineCoarseRatio = int(coarseR / fineR);
+int fineDamWidthCount = 32;
+int fineDamHeightCount = 32;
+int coarseDamWidthCount = fineDamWidthCount / fineCoarseRatio;
+int coarseDamHeightCount = fineDamHeightCount / fineCoarseRatio;
+float containerWidth = (coarseDamWidthCount * 4) * coarseR;
+float containerHeight = (coarseDamHeightCount * 4) * coarseR;
 Vector2f coarseContainerStart, coarseContainerEnd;
 Vector2f fineContainerStart, fineContainerEnd;
 
-int frameLimit = 1500;
+int frameLimit = 3000;
 int accFrameCount = 0;
 float accTime = 0.0f;
 
@@ -78,9 +82,9 @@ int main(int argc, char** argv)
 
 	buildModel_BreakingDam();
 	//buildModel_FromFile();
-
+	
 	SavePBFCTrainingDataEnv();
-
+	
 	if (context_major_version >= 3)
 	{
 		spherePrimiCoarse.createSphereBuffers((float)coarseR, 8);
@@ -98,6 +102,11 @@ void timeStep()
 	if (doPause)
 		return;
 	
+	//timer1.start();
+	//fineWorld->StepPBF();
+	//timer1.end();
+		
+	
 	coarseWorld->StepPBF();
 	fineWorld->StepPBFonSub1();
 
@@ -105,10 +114,11 @@ void timeStep()
 	pbfc2D->SolvePBFCConstaints(coarseWorld, fineWorld);
 	
 	fineWorld->StepPBFonSub2();
+	
 
 	//SavePBFCTrainingData();
 	SavePBFCTrainingData2();
-
+	
 	accFrameCount += 1;
 	if (accFrameCount == frameLimit)
 	{
@@ -141,126 +151,83 @@ void render()
 
 	// drawing fine world
 	{
-		glPointSize(6.0f);
-		Vector2f translationForFine(-3.0f, 0.0f);
-
-		glPushMatrix();
-		glTranslatef(translationForFine[0], translationForFine[1], 0.0f);
-		glBegin(GL_POINTS);
-		float fluidColor[4] = { 0.8f, 0.3f, 0.3f, 0.2f };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fluidColor);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fluidColor);
-		for (int i = 0; i < fineWorld->GetNumOfParticles(); i++)
+		Vector3f translationForFine(-1.75f, 0.0f, 0.0f);
+		float fluidColor[4] = { 0.8f, 0.3f, 0.3f, 1.0f };
+		for (int i = 0; i < (int)fineWorld->GetNumOfParticles(); i++)
 		{
 			Vector2f& pos = fineWorld->GetParticle(i)->m_curPosition;
-			glVertex2f(pos[0], pos[1]);
+			Vector3f particlePos = Vector3f(pos[0], pos[1], 0.0f) + translationForFine;
+			spherePrimiFine.renderSphere(particlePos, fluidColor);
 		}
-		glEnd();
-		glPopMatrix();
 
 		// drawing fine boundary particles
-		glPointSize(10.0f);
-
-		glPushMatrix();
-		glTranslatef(translationForFine[0], translationForFine[1], 0.0f);
-		glBegin(GL_POINTS);
 		float boundaryColor[4] = { 0.2f, 0.2f, 0.2f, 0.5f };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, boundaryColor);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, boundaryColor);
 		for (int i = 0; i < fineWorld->GetNumOfBoundaryParticles(); i++)
 		{
 			Vector2f& pos = fineWorld->GetBoundaryParticle(i)->m_restPosition;
-			glVertex2f(pos[0], pos[1]);
+			Vector3f particlePos = Vector3f(pos[0], pos[1], 0.0f) + translationForFine;
+			spherePrimiFine.renderSphere(particlePos, boundaryColor);
 		}
-		glEnd();
-		glPopMatrix();
 	}
 
 	// drawing coarse world
 	{
-		glPointSize(10.0f);
-		Vector2f translationForCoarse(3.0f, 0.0f);
-
-		glPushMatrix();
-		glTranslatef(translationForCoarse[0], translationForCoarse[1], 0.0f);
-		glBegin(GL_POINTS);
-		float fluidColorForCoarse[4] = { 0.0f, 0.2f, 0.7f, 0.5f };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fluidColorForCoarse);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fluidColorForCoarse);
+		Vector3f translationForCoarse(1.75f, 0.0f, 0.0f);
+		float fluidColorForCoarse[4] = { 0.0f, 0.2f, 0.7f, 1.0f };
 		for (int i = 0; i < coarseWorld->GetNumOfParticles(); i++)
 		{
 			Vector2f& pos = coarseWorld->GetParticle(i)->m_curPosition;
-			glVertex2f(pos[0], pos[1]);
+			Vector3f particlePos = Vector3f(pos[0], pos[1], 0.0f) + translationForCoarse;
+			spherePrimiCoarse.renderSphere(particlePos, fluidColorForCoarse);
 		}
-		glEnd();
-		glPopMatrix();
 
 		// drawing coarse boundary particles
-		glPushMatrix();
-		glTranslatef(translationForCoarse[0], translationForCoarse[1], 0.0f);
-		glBegin(GL_POINTS);
-		float boundaryColorForCoarse[4] = { 0.2f, 0.2f, 0.2f, 0.5f };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, boundaryColorForCoarse);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, boundaryColorForCoarse);
+		float boundaryColor[4] = { 0.2f, 0.2f, 0.2f, 0.5f };
 		for (int i = 0; i < coarseWorld->GetNumOfBoundaryParticles(); i++)
 		{
-			Vector2f& pos = coarseWorld->GetBoundaryParticle(i)->m_curPosition;
-			glVertex2f(pos[0], pos[1]);
+			Vector2f& pos = coarseWorld->GetBoundaryParticle(i)->m_restPosition;
+			Vector3f particlePos = Vector3f(pos[0], pos[1], 0.0f) + translationForCoarse;
+			spherePrimiCoarse.renderSphere(particlePos, boundaryColor);
 		}
-		glEnd();
-		glPopMatrix();
 	}
 
 	// drawing union world
 	{
-		Vector2f translationForUnion(0.0f, 3.5f);
+		Vector3f translationForUnion(0.0f, 3.5f, 0.0f);
 
-		// drawing fine particles
-		glPointSize(6.0f);
-		glPushMatrix();
-		glTranslatef(translationForUnion[0], translationForUnion[1], 0.0f);
-		glBegin(GL_POINTS);
-		float fluidColor[4] = { 0.8f, 0.3f, 0.3f, 0.2f };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fluidColor);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fluidColor);
-		for (int i = 0; i < fineWorld->GetNumOfParticles(); i++)
+		float fluidColor[4] = { 0.8f, 0.3f, 0.3f, 1.0f };
+		for (int i = 0; i < (int)fineWorld->GetNumOfParticles(); i++)
 		{
 			Vector2f& pos = fineWorld->GetParticle(i)->m_curPosition;
-			glVertex2f(pos[0], pos[1]);
+			Vector3f particlePos = Vector3f(pos[0], pos[1], 0.0f) + translationForUnion;
+			spherePrimiFine.renderSphere(particlePos, fluidColor);
 		}
-		glEnd();
-		glPopMatrix();
 
-		// drawing fine particles
-		glPointSize(10.0f);
-		glPushMatrix();
-		glTranslatef(translationForUnion[0], translationForUnion[1], 0.0f);
-		glBegin(GL_POINTS);
-		float fluidColorForCoarse[4] = { 0.0f, 0.2f, 0.7f, 0.5f };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fluidColorForCoarse);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fluidColorForCoarse);
+		float fluidColorForCoarse[4] = { 0.0f, 0.2f, 0.7f, 1.0f };
 		for (int i = 0; i < coarseWorld->GetNumOfParticles(); i++)
 		{
 			Vector2f& pos = coarseWorld->GetParticle(i)->m_curPosition;
-			glVertex2f(pos[0], pos[1]);
+			Vector3f particlePos = Vector3f(pos[0], pos[1], 0.0f) + translationForUnion;
+			spherePrimiCoarse.renderSphere(particlePos, fluidColorForCoarse);
 		}
-		glEnd();
-		glPopMatrix();
 
-		// drawing boundary particles
-		glPushMatrix();
-		glTranslatef(translationForUnion[0], translationForUnion[1], 0.0f);
-		glBegin(GL_POINTS);
-		float boundaryColor[4] = { 0.2f, 0.2f, 0.2f, 0.5f };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, boundaryColor);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, boundaryColor);
+		// drawing fine boundary particles
+		float boundaryColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
 		for (int i = 0; i < fineWorld->GetNumOfBoundaryParticles(); i++)
 		{
 			Vector2f& pos = fineWorld->GetBoundaryParticle(i)->m_restPosition;
-			glVertex2f(pos[0], pos[1]);
+			Vector3f particlePos = Vector3f(pos[0], pos[1], 0.0f) + translationForUnion;
+			spherePrimiFine.renderSphere(particlePos, boundaryColor);
 		}
-		glEnd();
-		glPopMatrix();
+
+		// drawing fine boundary particles
+		float boundaryColorForCoarse[4] = { 0.2f, 0.2f, 0.2f, 0.5f };
+		for (int i = 0; i < coarseWorld->GetNumOfBoundaryParticles(); i++)
+		{
+			Vector2f& pos = coarseWorld->GetBoundaryParticle(i)->m_restPosition;
+			Vector3f particlePos = Vector3f(pos[0], pos[1], 0.0f) + translationForUnion;
+			spherePrimiCoarse.renderSphere(particlePos, boundaryColorForCoarse);
+		}
 	}
 
 }
@@ -271,24 +238,25 @@ void cleanup()
 		spherePrimiCoarse.releaseBuffers();
 		spherePrimiFine.releaseBuffers();
 	}
+	timer1.printAvg("fineWorld->StepPBF");
 }
 
 void buildModel_BreakingDam()
 {
 	float timeStep = 0.0025f;
 
-	// main domain creation
+	// sub domain creation
 	std::vector<Vector2f> fineBoundaryParticles;
 	std::vector<Vector2f> fineFluidParticles;
 	CreateFineBreakingDam(fineFluidParticles);
-	CreateCoarseContainer(fineBoundaryParticles);
+	CreateFineContainer(fineBoundaryParticles);
 
 	fineWorld = new FluidWorld2D();
 	fineWorld->SetTimeStep(timeStep);
 	fineWorld->CreateBoundaryParticles(fineBoundaryParticles, coarseR);
 	fineWorld->CreateFluidParticles(fineFluidParticles, fineR);
 
-	// sub-domain creation
+	// main domain creation
 	std::vector<Vector2f> coarseBoundaryParticles;
 	std::vector<Vector2f> coarseFluidParticles;
 	CreateCoarseBreakingDam(coarseFluidParticles);
@@ -300,25 +268,27 @@ void buildModel_BreakingDam()
 	coarseWorld->CreateFluidParticles(coarseFluidParticles, coarseR);
 
 	pbfc2D = new PBFC2D(coarseWorld, fineWorld);
+	pbfc2D->SetSearchRange(2.0f * coarseWorld->GetParticleRadius());
 }
 
 void CreateCoarseBreakingDam(std::vector<Vector2f>& p_damParticles)
 {
-	p_damParticles.resize(coarseDamWidth*coarseDamHeight);
+	p_damParticles.resize(coarseDamWidthCount*coarseDamHeightCount);
 
 	float diam = 2.0f * coarseR;
-	float startX = -0.5f * containerWidth + diam + diam;
+	float startX = -0.5f * containerWidth + 0.2f * containerHeight;
+	startX += coarseR;
 	float startY = diam + diam + diam;
-	float yshift = sqrt(3.0f) * coarseR;
+	startY += coarseR;
 
 #pragma omp parallel default(shared)
 	{
 #pragma omp for schedule(static)  
-		for (int j = 0; j < coarseDamHeight; j++)
+		for (int j = 0; j < coarseDamHeightCount; j++)
 		{
-			for (int i = 0; i < coarseDamWidth; i++)
+			for (int i = 0; i < coarseDamWidthCount; i++)
 			{
-				p_damParticles[j*coarseDamWidth + i] = diam*Eigen::Vector2f((float)i, (float)j) + Eigen::Vector2f(startX, startY);
+				p_damParticles[j*coarseDamWidthCount + i] = diam*Eigen::Vector2f((float)i, (float)j) + Eigen::Vector2f(startX, startY);
 			}
 		}
 	}
@@ -346,22 +316,23 @@ void CreateCoarseContainer(std::vector<Vector2f>& p_boundaryParticles)
 }
 void CreateFineBreakingDam(std::vector<Vector2f>& p_damParticles)
 {
-	p_damParticles.resize(fineDamWidth*fineDamHeight);
+	p_damParticles.resize(fineDamWidthCount*fineDamHeightCount);
 
 	float diam = 2.0f * fineR;
 	float coarseDiam = 2.0f * coarseR;
-	float startX = -0.5f * containerWidth + coarseDiam + coarseDiam;
+	float startX = -0.5f * containerWidth + 0.2f * containerHeight;
+	startX += fineR;
 	float startY = coarseDiam + coarseDiam + coarseDiam;
-	float yshift = sqrt(3.0f) * fineR;
+	startY += fineR;
 
 #pragma omp parallel default(shared)
 	{
 #pragma omp for schedule(static)  
-		for (int j = 0; j < fineDamHeight; j++)
+		for (int j = 0; j < fineDamHeightCount; j++)
 		{
-			for (int i = 0; i < fineDamWidth; i++)
+			for (int i = 0; i < fineDamWidthCount; i++)
 			{
-				p_damParticles[j*fineDamWidth + i] = diam*Eigen::Vector2f((float)i, (float)j) + Eigen::Vector2f(startX, startY);
+				p_damParticles[j*fineDamWidthCount + i] = diam*Eigen::Vector2f((float)i, (float)j) + Eigen::Vector2f(startX, startY);
 			}
 		}
 	}
@@ -370,8 +341,12 @@ void CreateFineContainer(std::vector<Vector2f>& p_boundaryParticles)
 {
 	float x1 = -containerWidth / 2.0f;
 	float x2 = containerWidth / 2.0f;
+	x1 += fineCoarseRatio * 0.5f * fineR;
+	x2 -= fineCoarseRatio * 0.5f * fineR;
 	float y1 = 0.0f;
 	float y2 = containerHeight;
+	y1 += fineCoarseRatio * 0.5f * fineR;
+	y2 -= fineCoarseRatio * 0.5f * fineR;
 
 	fineContainerStart[0] = x1;
 	fineContainerStart[1] = y1;
@@ -417,7 +392,7 @@ void SavePBFCTrainingDataEnv()
 	float fbuf[2];
 	int ibuf[1];
 
-	FILE* fpEnvF = fopen("./PBFC2D_SD13/BoundaryEnv.dat", "wb");
+	FILE* fpEnvF = fopen("./PBFC2D_SD15/BoundaryEnv.dat", "wb");
 
 	ibuf[0] = fineWorld->GetNumOfBoundaryParticles();
 	fwrite(ibuf, sizeof(int), 1, fpEnvF);
@@ -439,11 +414,11 @@ void SavePBFCTrainingData()
 	std::vector<FParticle2D*>& coarseP = coarseWorld->GetParticleList();
 
 	string frameIdx = std::to_string(accFrameCount) + ".dat";
-	string NeighborIdxPath = "./PBFC2D_SD13/NeighborInfo_";
-	string FineParticleInfoPath = "./PBFC2D_SD13/FineParticleInfo_";
-	string CoarseParticleInfoPath = "./PBFC2D_SD13/CoarseParticleInfo_";
-	string GTPosPath = "./PBFC2D_SD13/GTPos_";
-	string GTVelPath = "./PBFC2D_SD13/GTVel_";
+	string NeighborIdxPath = "./PBFC2D_SD15/NeighborInfo_";
+	string FineParticleInfoPath = "./PBFC2D_SD15/FineParticleInfo_";
+	string CoarseParticleInfoPath = "./PBFC2D_SD15/CoarseParticleInfo_";
+	string GTPosPath = "./PBFC2D_SD15/GTPos_";
+	string GTVelPath = "./PBFC2D_SD15/GTVel_";
 
 	FILE* fpNeiIdx = fopen((NeighborIdxPath + frameIdx).c_str(), "wb");
 	FILE* fpFineP = fopen((FineParticleInfoPath + frameIdx).c_str(), "wb");
@@ -536,8 +511,8 @@ void SavePBFCTrainingData2()
 	std::vector<FParticle2D*>& coarseP = coarseWorld->GetParticleList();
 
 	string frameIdx = std::to_string(accFrameCount) + ".dat";
-	string FineParticleInfoPath = "./PBFC2D_SD13/FineParticleInfo_";
-	string CoarseParticleInfoPath = "./PBFC2D_SD13/CoarseParticleInfo_";
+	string FineParticleInfoPath = "./PBFC2D_SD15/FineParticleInfo_";
+	string CoarseParticleInfoPath = "./PBFC2D_SD15/CoarseParticleInfo_";
 
 	FILE* fpFineP = fopen((FineParticleInfoPath + frameIdx).c_str(), "wb");
 	FILE* fpCoarseP = fopen((CoarseParticleInfoPath + frameIdx).c_str(), "wb");
@@ -549,8 +524,6 @@ void SavePBFCTrainingData2()
 	ibuf[0] = (int)fineP.size();
 	fwrite(ibuf, sizeof(int), 1, fpFineP);
 
-	int nNei, maxCountNei = 0;
-	int nNeiFP, nNeiBP;
 	// save fineP's information
 	for (int i = 0; i < (int)fineP.size(); i++)
 	{
@@ -583,4 +556,6 @@ void SavePBFCTrainingData2()
 
 	fclose(fpFineP);
 	fclose(fpCoarseP);
+
+	printf("%d frame saved.\n", accFrameCount);
 }

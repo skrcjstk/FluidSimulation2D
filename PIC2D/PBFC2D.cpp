@@ -1,9 +1,6 @@
 #include "PBFC2D.h"
 PBFC2D::PBFC2D(FluidWorld2D* p_mainWorld, FluidWorld2D* p_subWorld)
 {
-	float mainR = p_mainWorld->GetParticleRadius();
-	constKernel.SetSmoothingRadius(2.0f * mainR);
-
 	m_PBFCData.m_lambdaForMain.resize(p_mainWorld->GetNumOfParticles());
 	m_PBFCData.m_corrWithDensity.resize(p_subWorld->GetNumOfParticles());
 	m_PBFCData.m_corrWithVelocity.resize(p_subWorld->GetNumOfParticles());
@@ -12,21 +9,29 @@ PBFC2D::PBFC2D(FluidWorld2D* p_mainWorld, FluidWorld2D* p_subWorld)
 	m_neighListwithSubP.resize(p_mainWorld->GetNumOfParticles());
 	m_neighListwithSubBoundaryP.resize(p_mainWorld->GetNumOfParticles());
 
-	m_neighListwithCoarseFP.resize(p_subWorld->GetNumOfParticles());
-	m_neighListwithCoarseBP.resize(p_subWorld->GetNumOfParticles());
+	//m_neighListwithCoarseFP.resize(p_subWorld->GetNumOfParticles());
+	//m_neighListwithCoarseBP.resize(p_subWorld->GetNumOfParticles());
 
 	m_tDataForCoarse.resize(p_mainWorld->GetNumOfParticles());
 	m_tDataForFine.resize(p_mainWorld->GetNumOfParticles());
 	m_tDataForCoarseB.resize(p_mainWorld->GetNumOfParticles());
 	m_tDataForFineB.resize(p_mainWorld->GetNumOfParticles());
 }
+
+void PBFC2D::SetSearchRange(float p_searchRange)
+{
+	constKernel.SetSmoothingRadius(p_searchRange);
+}
+
 void PBFC2D::NeighborBTWTwoResForPBFC(FluidWorld2D* p_mainWorld, FluidWorld2D* p_subWorld)
 {
 	float searchRange = constKernel.GetSmoothingRadius();
+
 	std::vector<FParticle2D*>& mainP = p_mainWorld->GetParticleList();
 	std::vector<FParticle2D*>& subP = p_subWorld->GetParticleList();
 	std::vector<FParticle2D*>& boundarySubP = p_subWorld->GetBoundaryParticleList();
 	
+	/*
 	for (int i = 0; i < subP.size(); i++)
 	{
 		m_neighListwithCoarseFP[i].clear();
@@ -44,6 +49,7 @@ void PBFC2D::NeighborBTWTwoResForPBFC(FluidWorld2D* p_mainWorld, FluidWorld2D* p
 			}
 		}
 	}
+	*/
 
 	for (int i = 0; i < mainP.size(); i++)
 	{
@@ -57,7 +63,7 @@ void PBFC2D::NeighborBTWTwoResForPBFC(FluidWorld2D* p_mainWorld, FluidWorld2D* p
 			if ((mainPos - subPos).norm() <= searchRange)
 			{
 				m_neighListwithSubP[i].push_back(j);
-				m_neighListwithCoarseFP[j].push_back(i);
+				//m_neighListwithCoarseFP[j].push_back(i);
 			}
 		}
 		m_neighListwithSubBoundaryP[i].clear();
@@ -69,11 +75,8 @@ void PBFC2D::NeighborBTWTwoResForPBFC(FluidWorld2D* p_mainWorld, FluidWorld2D* p
 			{
 				m_neighListwithSubBoundaryP[i].push_back(j);
 			}
-				
 		}
 	}
-
-
 }
 void PBFC2D::SolvePBFCConstaints(FluidWorld2D* p_mainWorld, FluidWorld2D* p_subWorld)
 {

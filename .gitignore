@@ -41,3 +41,6 @@ FluidSimulation2D/x64/Release/MiniGL.obj
 FluidSimulation2D/x64/Release/PrimitiveBuffer.obj
 FluidSimulation2D/x64/Release/Shader.obj
 PositionBasedFluid2D/x64/Release/PositionBasedFluid2D.Build.CppClean.log
+*.dat
+FluidSimulation2D/x64/Release/main_coarse2fine.obj
+FluidSimulation2D/x64/Release/main_visualization.obj

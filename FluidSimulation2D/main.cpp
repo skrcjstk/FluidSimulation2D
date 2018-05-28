@@ -74,7 +74,7 @@ int maxmaxF=0, maxmaxB=0, maxmaxFB=0;
 int main(int argc, char** argv)
 {
 	std::srand((unsigned int)std::time(nullptr));
-	printf("OpenMP version: %d\n", _OPENMP);
+	//printf("OpenMP version: %d\n", _OPENMP);
 
 	// OpenGL 
 	MiniGL::init(argc, argv, 1024, 768, 0, 0, "Fluid demo");

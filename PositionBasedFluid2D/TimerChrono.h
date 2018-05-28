@@ -20,11 +20,11 @@ public:
 		start1 = std::chrono::system_clock::now();
 	}
 
-	void end(char* p_name)
+	void end()
 	{
 		end1 = std::chrono::system_clock::now();
 		duration = (end1 - start1);
-		printf("%s Cost : %lf sec \n", p_name, duration);
+		//printf("%s Cost : %lf sec \n", p_name, duration);
 		acc_duration += duration;
 		acc_count += 1;
 	}
